@@ -652,7 +652,7 @@ class Metric(SimpleClass):
         self.p = []  # (nc, )
         self.r = []  # (nc, )
         self.f1 = []  # (nc, )
-        self.all_ap = []  # (nc, 10)
+        self.all_ap = []  # (nc, 10) want 50,55, etc tot 95) dus number of classes x 10
         self.ap_class_index = []  # (nc, )
         self.nc = 0
 
@@ -669,10 +669,10 @@ class Metric(SimpleClass):
     @property
     def ap90(self):
         """
-        Returns the Average Precision (AP) at an IoU threshold of 0.5 for all classes.
+        Returns the Average Precision (AP) at an IoU threshold of 0.9 for all classes.
 
         Returns:
-            (np.ndarray, list): Array of shape (nc,) with AP50 values per class, or an empty list if not available.
+            (np.ndarray, list): Array of shape (nc,) with AP90 values per class, or an empty list if not available.
         """
         return self.all_ap[:, -2] if len(self.all_ap) else []
 
@@ -764,7 +764,7 @@ class Metric(SimpleClass):
 
     def fitness(self):
         """Model fitness as a weighted combination of metrics."""
-        w = [0.0, 0.0, 0.05, 0.2, 0.75]  # weights for [P, R, mAP@0.5, mAP@0.5:0.95] [0.0, 0.0, 0.1, 0.9] 
+        w = [0.0, 0.0, 0.05, 0.2, 0.75]  # weights for [P, R, mAP@0.5,mAP@0.9,mAP@0.5:0.95] [0.0, 0.0, 0.1, 0.9] 
         return (np.array(self.mean_results()) * w).sum()
 
     def update(self, results):

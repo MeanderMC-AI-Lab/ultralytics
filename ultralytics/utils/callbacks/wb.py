@@ -83,6 +83,9 @@ def _plot_curve(
     x_new = np.linspace(x[0], x[-1], num_x).round(5)
 
     # Create arrays for logging
+    # print(np.shape(y))
+    # print(y)
+    
     x_log = x_new.tolist()
     y_log = np.interp(x_new, x, np.mean(y, axis=0)).round(3).tolist()
 
@@ -114,7 +117,12 @@ def on_pretrain_routine_start(trainer):
 
 def on_fit_epoch_end(trainer):
     """Logs training metrics and model information at the end of an epoch."""
+    global highest_fitness 
     wb.run.log(trainer.metrics, step=trainer.epoch + 1)
+    if trainer.fitness > highest_fitness:
+         highest_fitness = trainer.fitness
+    
+    wb.run.log({'metrics/fitness(B)': highest_fitness}, step=trainer.epoch + 1) # Vincent
     _log_plots(trainer.plots, step=trainer.epoch + 1)
     _log_plots(trainer.validator.plots, step=trainer.epoch + 1)
     if trainer.epoch == 0:
@@ -124,6 +132,8 @@ def on_fit_epoch_end(trainer):
 def on_train_epoch_end(trainer):
     """Log metrics and save images at the end of each training epoch."""
     wb.run.log(trainer.label_loss_items(trainer.tloss, prefix="train"), step=trainer.epoch + 1)
+
+    
     wb.run.log(trainer.lr, step=trainer.epoch + 1)
     if trainer.epoch == 1:
         _log_plots(trainer.plots, step=trainer.epoch + 1)
@@ -134,6 +144,7 @@ def on_train_end(trainer):
     _log_plots(trainer.validator.plots, step=trainer.epoch + 1)
     _log_plots(trainer.plots, step=trainer.epoch + 1)
     art = wb.Artifact(type="model", name=f"run_{wb.run.id}_model")
+    
     if trainer.best.exists():
         art.add_file(trainer.best)
         wb.run.log_artifact(art, aliases=["best"])
@@ -150,6 +161,8 @@ def on_train_end(trainer):
         )
     wb.run.finish()  # required or run continues on dashboard
 
+
+highest_fitness = 0.0 
 
 callbacks = (
     {
